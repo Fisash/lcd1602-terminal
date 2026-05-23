@@ -62,8 +62,8 @@ main:
     cbi DDRB, 0   ; now D8 in INPUT
 
     ldi r16, 0b11111111
-    out PORTD, r16; nor ALL bits of PORTDB is - bits of D-port i LOW 
-    sbi PORTB, 0
+    out PORTD, r16; now ALL bits of PORTDB is - bits of D-port in HIGH (5V)
+    sbi PORTB, 0  ; now D8 in HIGH (5V)
 
 loop:
     sbic PIND, 2

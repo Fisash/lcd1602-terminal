@@ -18,12 +18,8 @@
 .global i2c_init
 
 .global i2c_write_start
-.global i2c_write_addres
 .global i2c_write_data
 .global i2c_write_stop
-
-.global i2c_send_byte
-.global i2c_send_bytes
 
 .extern delay_big
 
@@ -62,15 +58,6 @@ i2c_write_stop:
 
     ret
 
-; write addres byte from r16
-i2c_write_addres:
-    sts TWDR,r16
-    ldi r18,(1<<TWINT)|(1<<TWEN)
-    sts TWCR,r18
-    
-    rcall wait_twint
-    ret
-
 ; write data byte from r16
 i2c_write_data:
     sts TWDR,r16
@@ -79,26 +66,3 @@ i2c_write_data:
     
     rcall wait_twint
     ret
-
-; I2C SECCION
-; write byte from r16 by i2c protocol to OUTPUT
-i2c_send_byte:
-    rcall i2c_write_start
-    rcall i2c_write_addres
-    rcall i2c_write_data
-    rcall i2c_write_stop
-    ret
-
-; write r17 bytes from Z
-i2c_send_bytes:
-    rcall i2c_write_start
-    rcall i2c_write_addres
-    
-1:  ld r16, Z+
-    rcall i2c_write_data
-    dec r17
-    brne 1b
-    
-    rcall i2c_write_stop
-    ret
-    

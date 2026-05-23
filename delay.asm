@@ -69,7 +69,7 @@ delay_tap:
     rcall delay_3_nested
     ret
 
-; safe  (for stack balanc) delay tap
+; safe (for registers) delay tap
 sdelay_tap:
     push r20
     push r21

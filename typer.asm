@@ -41,29 +41,29 @@ is_button_down:
 ; r24 - end typing ascii range code
 ; RESULT:
 ; r20 choosen ascii code
-type_char:               ; 
-    mov r16, r22         ; 
-    rcall lcd_draw_char  ; new char that we will replace in leafing
-    mov r20, r22         ; set r20 start ascii code
-                         ;
-1:  rcall sdelay_tap     ;
+type_char:                ; 
+    mov r16, r22          ; 
+    rcall lcd_draw_char   ; new char that we will replace in leafing
+    mov r20, r22          ; set r20 start ascii code
+                          ;
+1:  rcall sdelay_tap      ;
 
     ; we saved Z and r18 to this
-    rcall is_button_down ; check button status
-    brne 2f ; jump to end if button was upped
-
+    rcall is_button_down  ; check button status
+    brne 2f               ; jump to end if button was upped
+                          ; else:
     push r20
-    mov r16, r20
-    rcall lcd_replace_char
+    mov r16, r20          ; now current choosen char in r16
+    rcall lcd_replace_char; replace last char (from drawen in proc start) to this one
     pop r20
 
-    inc r20              ; else inc r20
+    inc r20               ;  
 
-    mov r25, r24         ; now r25 = last ascii range char
-    inc r25              ; now r25 = first out of range char code
-    cp r20, r25          ; compare r20 with this code
-    brlo 1b              ; if r20 is not out of range - go to next iter
-    mov r20, r22         ; write r20 for next range circe
-    rjmp 1b              ; next iter now
+    mov r25, r24          ; now r25 = last ascii range char
+    inc r25               ; now r25 = first out of range char code
+    cp r20, r25           ; compare r20 with this code
+    brlo 1b               ; if r20 is not out of range - go to next iter
+    mov r20, r22          ; write r20 for next range circe
+    rjmp 1b               ; next iter now
 2:  ret                  
     

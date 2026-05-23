@@ -290,7 +290,7 @@ lcd_replace_char:
 lcd_write_byte:                    ; 
     rcall i2c_write_start          ; start i2c seccion
     ldi r16, ADDRES                ; put addres of lcd port to r16
-    rcall i2c_write_addres         ; set this addres for i2c
+    rcall i2c_write_data           ; set this addres for i2c
                                    ;
     ori r17,(1<<LCD_E)|(1<<LCD_BL) ; set lcd_e (enable) and lcd_bl (blight) bits to 1
                                    ;
