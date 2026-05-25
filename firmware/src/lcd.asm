@@ -15,7 +15,6 @@ buffer: .space 32 ; buffer of frame for lcd 1602. 16*2 bytes
 scrolling_first_line_buffer: .space SCR_BFR_LINE_SIZE ; for scrolling mode
 scrolling_second_line_buffer: .space SCR_BFR_LINE_SIZE ; for scrolling mode
 
-
 .section .text
 ; base
 .global lcd_init
