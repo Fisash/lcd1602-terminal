@@ -3,8 +3,14 @@
 .section .text
 
 .global type_char
+
+; from delay.asm
 .extern delay_tap
 .extern delay_huge
+
+; from lcd_buf.asm
+.extern lcd_input_char
+.extern lcd_replace_char
 
 ; make mask of r18 bit
 ; result in r19
@@ -43,7 +49,7 @@ is_button_down:
 ; r20 choosen ascii code
 type_char:                ; 
     mov r16, r22          ; 
-    rcall lcd_draw_char   ; new char that we will replace in leafing
+    rcall lcd_input_char   ; new char that we will replace in leafing
     mov r20, r22          ; set r20 start ascii code
                           ;
 1:  rcall sdelay_tap      ;

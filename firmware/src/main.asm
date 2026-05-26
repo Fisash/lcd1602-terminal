@@ -16,18 +16,16 @@
 .extern delay_tap
 .extern delay_huge
 
-; from lcd.asm
+; from lcd_buf
 .extern lcd_init
-.extern clear_buffer
-.extern copy_flash_string_to_buffer
+.extern lcd_move_cursor_to_z
+.extern lcd_cursor_to_line1
+.extern lcd_cursor_to_line2
+.extern lcd_input_char
+.extern lcd_erase_char
+.extern lcd_replace_char
 .extern lcd_draw_buffer
-.extern lcd_draw_flash_string
-.extern lcd_shift_left
-
-.extern lcd_draw_scrolling_buffer
-.extern copy_flash_string_to_first_scrolling_line
-.extern copy_flash_string_to_second_scrolling_line
-.extern clear_scrolling_buffer
+.extern clear_buffer
 
 ; from uart.asm
 .extern uart_init
@@ -66,6 +64,8 @@ main:
     sbi PORTB, 0  ; now D8 in HIGH (5V)
 
 loop:
+    rcall lcd_draw_buffer
+
     sbic PIND, 2
     rjmp 1f
     tap_button PIND, 2, ' ', '/'
