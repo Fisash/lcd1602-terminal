@@ -20,6 +20,7 @@
 .section .text
 .global uart_init
 .global uart_write
+.global uart_write_string
 .global uart_read
 
 ; init 9600 bauds, 8 data-bits, 1 stop-bit, no parity
@@ -38,12 +39,24 @@ uart_init:
 
 ; r16 = byte for transmit
 uart_write:
+    push r17
     lds r17, UCSR0A
     sbrs r17, UDRE0
     rjmp uart_write
     
     sts UDR0, r16
+    pop r17
     ret
+
+; writes bytes from Z to first 0x0
+uart_write_string:
+    lpm r16, Z+ 
+    tst r16
+    breq 1f
+    rcall uart_write
+    rjmp uart_write_string
+1:  ret
+      
 
 ; after this, r16 will contain recived byte
 uart_read:

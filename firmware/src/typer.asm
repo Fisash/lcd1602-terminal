@@ -47,9 +47,18 @@ is_button_down:
 ; r24 - end typing ascii range code
 ; RESULT:
 ; r20 choosen ascii code
+;debug2: .asciz "start type char\n"
+;debug3: .asciz "end type char\n"
+
 type_char:                ; 
+    ;push_z
+    ;set_z debug2
+    ;rcall uart_write_string
+    ;pop_z
+
     mov r16, r22          ; 
-    rcall lcd_input_char   ; new char that we will replace in leafing
+    rcall lcd_input_char  ; new char that we will replace in leafing
+    rcall lcd_draw_buffer
     mov r20, r22          ; set r20 start ascii code
                           ;
 1:  rcall sdelay_tap      ;
@@ -61,6 +70,7 @@ type_char:                ;
     push r20
     mov r16, r20          ; now current choosen char in r16
     rcall lcd_replace_char; replace last char (from drawen in proc start) to this one
+    rcall lcd_draw_buffer
     pop r20
 
     inc r20               ;  
@@ -71,5 +81,10 @@ type_char:                ;
     brlo 1b               ; if r20 is not out of range - go to next iter
     mov r20, r22          ; write r20 for next range circe
     rjmp 1b               ; next iter now
-2:  ret                  
+2:  
+;    push_z
+;    set_z debug3
+;    rcall uart_write_string
+;    pop_z
+    ret                  
     

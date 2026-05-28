@@ -50,10 +50,8 @@ main:
     ldi r16, 0x08
     out 0x3E, r16
 
-    rcall lcd_init
     rcall uart_init
-    
-    rcall lcd_clear
+    rcall lcd_init
 
     ldi r16, 0x0  ; null mask
     out DDRD, r16 ; now ALL bits of DDRD is 0 - bits of D-port in INPUT (D0-D7)
@@ -65,7 +63,6 @@ main:
 
 loop:
     rcall lcd_draw_buffer
-
     sbic PIND, 2
     rjmp 1f
     tap_button PIND, 2, ' ', '/'

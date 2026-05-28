@@ -33,8 +33,8 @@ cursor_ptr: .space 2
 
 lcd_init:
     rcall lcd_base_init
-    rcall clear_buffer 
     rcall lcd_cursor_to_line1
+    rcall clear_buffer 
     ret
 
 ; ----------------------------- work with cursor ------------------------------
@@ -160,6 +160,8 @@ clear_buffer:
     rcall clear_bytes_from_z
     ret
 
+;debug1: .asciz "draw buffer called\n"
+
 ; r16 = offset of first line
 ; r17 = offset of second line
 lcd_draw_buffer:
@@ -167,9 +169,13 @@ lcd_draw_buffer:
     push r16
     push r17
     push r16
+
+    ; debug
+    rcall uart_output_buffer
+
     rcall lcd_clear             ; clear lcd and set cursor to 0x0
 
-    set_Z line1_buffer          ; set r31:r30 for bss buffer addres
+    set_z line1_buffer          ; set r31:r30 for bss buffer addres
     pop r16    
     add_z r16                   
     ldi r19, REAL_LINE_SIZE     ;
@@ -178,7 +184,7 @@ lcd_draw_buffer:
     ldi r16, 0x40               ;
     rcall lcd_set_cursor        ; set cursor to start of second line
     
-    set_Z line2_buffer          ; set r31:r30 for bss buffer addres
+    set_z line2_buffer          ; set r31:r30 for bss buffer addres
     pop r17    
     add_z r17                   ; add r17 to Z (offset for start second line buffer)
     ldi r19, REAL_LINE_SIZE     ;
@@ -188,3 +194,22 @@ lcd_draw_buffer:
     pop r17
     ret                         
 
+; --------------------------------- debugging ----------------------------------
+uart_output_cursor_value:
+    rcall lcd_load_cursor_addres_to_z
+    mov r16, r30
+    rcall uart_write
+    mov r16, r31
+    rcall uart_write
+    ret
+    
+uart_output_buffer:
+    set_z line1_buffer
+    ldi r17, 16
+1:  ld r16, Z+
+    rcall uart_write 
+    dec r17
+    brne 1b
+    ldi r16, 0x0A
+    rcall uart_write
+    ret
