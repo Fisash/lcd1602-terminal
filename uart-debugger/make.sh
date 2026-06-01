@@ -1,28 +1,50 @@
 #!/bin/bash
-set -e  
+set -e
 
 SRC_DIR=src
 OUT_DIR=out
+BASE_DIR="$SRC_DIR/base"   
 
 mkdir -p "$OUT_DIR"
 
-shopt -s nullglob
-ASM_FILES=("$SRC_DIR"/*.asm)
+ASM1="$BASE_DIR/start.asm"
+ASM2="$BASE_DIR/syscalls.asm"
 
-if [ ${#ASM_FILES[@]} -eq 0 ]; then
-    echo "Error: there are no .asm files in $SRC_DIR directory"
+if [ ! -f "$ASM1" ]; then
+    echo "Error: $ASM1 not found"
+    exit 1
+fi
+if [ ! -f "$ASM2" ]; then
+    echo "Error: $ASM2 not found"
     exit 1
 fi
 
-OBJ_FILES=()
+echo "=== Assembling base files ==="
+nasm -f elf32 -g -F dwarf "$ASM1" -o "$OUT_DIR/start.o"
+echo "  $ASM1 -> $OUT_DIR/start.o"
 
-echo "=== Compilation ==="
-for asm in "${ASM_FILES[@]}"; do
-    obj="$OUT_DIR/$(basename "${asm%.asm}.o")"
-    echo "  $asm -> $obj"
-    nasm -f elf32 -g -F dwarf -I"$SRC_DIR" "$asm" -o "$obj"
+nasm -f elf32 -g -F dwarf "$ASM2" -o "$OUT_DIR/syscalls.o"
+echo "  $ASM2 -> $OUT_DIR/syscalls.o"
+
+shopt -s nullglob
+C_FILES=("$SRC_DIR"/*.c)
+
+if [ ${#C_FILES[@]} -eq 0 ]; then
+    echo "Error: no .c files found in $SRC_DIR"
+    exit 1
+fi
+
+OBJ_FILES=("$OUT_DIR/start.o" "$OUT_DIR/syscalls.o")
+
+echo "=== Compiling C sources ==="
+for cfile in "${C_FILES[@]}"; do
+    obj="$OUT_DIR/$(basename "${cfile%.c}.o")"
+    echo "  $cfile -> $obj"
+    gcc -m32 -Wall -nostdlib -ffreestanding -fno-stack-protector -fno-builtin -static -c "$cfile" -o "$obj"
     OBJ_FILES+=("$obj")
 done
 
-echo "=== Linking  ==="
-ld -m elf_i386 "${OBJ_FILES[@]}" -o "$OUT_DIR/main"
+echo "=== Linking ==="
+ld -m elf_i386 -strip-all -o "$OUT_DIR/main" "${OBJ_FILES[@]}"
+
+echo "Build successful: $OUT_DIR/main"

@@ -40,9 +40,9 @@ uart_init:
 ; r16 = byte for transmit
 uart_write:
     push r17
-    lds r17, UCSR0A
+1:  lds r17, UCSR0A
     sbrs r17, UDRE0
-    rjmp uart_write
+    rjmp 1b
     
     sts UDR0, r16
     pop r17

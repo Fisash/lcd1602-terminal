@@ -160,7 +160,6 @@ clear_buffer:
     rcall clear_bytes_from_z
     ret
 
-;debug1: .asciz "draw buffer called\n"
 
 ; r16 = offset of first line
 ; r17 = offset of second line
@@ -172,6 +171,7 @@ lcd_draw_buffer:
 
     ; debug
     rcall uart_output_buffer
+    rcall uart_output_cursor_value
 
     rcall lcd_clear             ; clear lcd and set cursor to 0x0
 
@@ -195,7 +195,12 @@ lcd_draw_buffer:
     ret                         
 
 ; --------------------------------- debugging ----------------------------------
+start_cursor_seq: .asciz "/^m[CUR"
+.p2align 1 
 uart_output_cursor_value:
+    set_z start_cursor_seq
+    rcall uart_write_string
+
     rcall lcd_load_cursor_addres_to_z
     mov r16, r30
     rcall uart_write
@@ -203,13 +208,16 @@ uart_output_cursor_value:
     rcall uart_write
     ret
     
+start_buffer_seq: .asciz "/^m[BUF"
+.p2align 1 
 uart_output_buffer:
+    set_z start_buffer_seq
+    rcall uart_write_string
+
     set_z line1_buffer
     ldi r17, 16
 1:  ld r16, Z+
     rcall uart_write 
     dec r17
     brne 1b
-    ldi r16, 0x0A
-    rcall uart_write
     ret

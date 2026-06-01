@@ -62,7 +62,10 @@ main:
     sbi PORTB, 0  ; now D8 in HIGH (5V)
 
 loop:
+    ldi r16, 0
+    ldi r17, 0
     rcall lcd_draw_buffer
+
     sbic PIND, 2
     rjmp 1f
     tap_button PIND, 2, ' ', '/'
@@ -89,6 +92,7 @@ loop:
 
 6:  sbis PINB, 0
     rcall lcd_erase_char
+
     rcall delay_tap
     
     rjmp loop
