@@ -5,3 +5,7 @@
 *.elf
 
 *.txt
+
+firmware/out/
+
+uart-debugger/out/

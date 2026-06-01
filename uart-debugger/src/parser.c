@@ -1,5 +1,6 @@
 #include "base/syscalls.h"
 #include "parser.h"
+#include "converter.h"
 
 typedef enum InputState
 {
@@ -83,29 +84,39 @@ static void parse_byte_sequence_id_state(char byte)
 }
 
 /* CURSOR DATA STATE*/
-static char cursor_data_buf[2];
+static char cursor_data_buf[5];
 static void parse_byte_cursor_state(char byte)
 {
-    cursor_data_buf[iterator] = byte;
-    iterator++;
-    if(iterator == 2)
+    byte_to_hex(byte, &cursor_data_buf[iterator]);
+
+    if(iterator == 0)
+        iterator += 3;
+    else
     {
-        sys_write(1, cursor_data_buf, 2);
+        cursor_data_buf[2] = ' ';
+        sys_write(1, cursor_data_buf, 5);
         input_state = SequencePrefix;
         iterator = 0;
     }
 }
 
 /* FRAME BUFFER DATA STATE*/
-static char framebuf_data_buf[16];
+static char framebuf_data_buf[19];
+static char framebuf_data_dump_buf[32];
 
 static void parse_byte_framebuf_state(char byte)
 {
-    framebuf_data_buf[iterator] = byte;
+    framebuf_data_buf[iterator+1] = byte;
+    byte_to_hex(byte, &framebuf_data_dump_buf[iterator*2]);
     iterator++;
     if(iterator == 16)
     {
-        sys_write(1, framebuf_data_buf, 16);
+        framebuf_data_buf[0] = '"';
+        framebuf_data_buf[17] = '"';
+        framebuf_data_buf[18] = '\n';
+
+        sys_write(1, framebuf_data_buf, 19);
+        sys_write(1, framebuf_data_dump_buf, 32);
         input_state = SequencePrefix;
         iterator = 0;
     }
@@ -128,5 +139,4 @@ void parse_byte(char byte)
             parse_byte_framebuf_state(byte);
             break;
     } 
-
 }
