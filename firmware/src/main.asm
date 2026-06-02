@@ -68,7 +68,9 @@ loop:
 
     sbic PIND, 2
     rjmp 1f
-    tap_button PIND, 2, ' ', '/'
+    ldi r16, 'a'
+    rcall lcd_input_char
+    ;tap_button PIND, 2, ' ', '/'
 
 1:  sbic PIND, 3
     rjmp 2f

@@ -83,9 +83,11 @@ lcd_cursor_decrement:
 ; put char to addres from cursor and increment cursor ptr
 ; r16 = char
 lcd_input_char:
-    rcall  lcd_load_cursor_addres_to_z
+    push_z
+    rcall lcd_load_cursor_addres_to_z
     st Z, r16
     rcall lcd_cursor_increment
+    pop_z
     ret
 
 ; dec cursor, put space (and inc cursor), dec cursor.
@@ -98,8 +100,10 @@ lcd_erase_char:
     
 ; r16 = new value of current char
 lcd_replace_char:
+    push_z
     rcall lcd_cursor_decrement
-    rcall lcd_draw_char
+    rcall lcd_input_char
+    pop_z
     ret
 
 ; ---------------------- flash -----------------------
@@ -164,6 +168,7 @@ clear_buffer:
 ; r16 = offset of first line
 ; r17 = offset of second line
 lcd_draw_buffer:
+    push_z
     push r17
     push r16
     push r17
@@ -192,6 +197,7 @@ lcd_draw_buffer:
     
     pop r16
     pop r17
+    pop_z
     ret                         
 
 ; --------------------------------- debugging ----------------------------------

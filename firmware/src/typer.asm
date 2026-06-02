@@ -51,11 +51,6 @@ is_button_down:
 ;debug3: .asciz "end type char\n"
 
 type_char:                ; 
-    ;push_z
-    ;set_z debug2
-    ;rcall uart_write_string
-    ;pop_z
-
     mov r16, r22          ; 
     rcall lcd_input_char  ; new char that we will replace in leafing
     rcall lcd_draw_buffer
@@ -63,8 +58,8 @@ type_char:                ;
                           ;
 1:  rcall sdelay_tap      ;
 
-    ; we saved Z and r18 to this
     rcall is_button_down  ; check button status
+
     brne 2f               ; jump to end if button was upped
                           ; else:
     push r20
