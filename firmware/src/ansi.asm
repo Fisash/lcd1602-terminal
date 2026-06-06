@@ -8,10 +8,12 @@
 ; we got [, so reading params and command char
 #define READ_PARAMS 2
 
+#define ANSI_PARAM_BUF_SIZE 4
+
 .section .bss
 state_buffer: .space 1
 
-ansi_params: .space 4
+ansi_params: .space ANSI_PARAM_BUF_SIZE
 ansi_param_count: .space 1
 
 .section .text
@@ -22,6 +24,18 @@ ansi_param_count: .space 1
 .extern lcd_input_char
 ; from strnum.asm
 .extern is_digit
+
+; fill ansi params by spaces
+ansi_clear_param_buffer:
+    push r16
+    ldi r16, ' '
+    set_z ansi_params
+    ldi r17, ANSI_PARAM_BUF_SIZE
+1:  st Z+, r16
+    dec r17
+    brne 1b
+    pop r16
+    ret
 
 ; parse r16 byte
 ansi_parse:                        
@@ -54,6 +68,7 @@ ansi_parse_read_csi:
     rjmp 2f                        ; jump to ret
 1:  lds r17, READ_PARAMS           ; set r17 to read params state value
     sts state_buffer, r17          ; store this value to state buffer
+    rcall ansi_clear_param_buffer  ; clear param buffer
 2:  ret                            ;
 
 ; parse r16 byte in read params state 
@@ -80,9 +95,20 @@ ansi_parse_read_params:
     sts ansi_param_count, r17      ; store new value to ram
     rjmp 3f                        ; jump to ret
 
-2:  cpi r16, 'h'                   ; command processing...
-    ; ...
+2:  rcall ansi_do_commands         ; command processing...
     ldi r17, NORMAL
     sts state_buffer, r17
 3:  ret
 
+; do command with done param buffer and r16 as a command char
+ansi_do_commands:
+    cpi r16, 'J'
+    breq ansi_j_command
+    ret
+
+ansi_j_command:
+    lds r17, ansi_params           ;
+    cpi r17, '2'                   ; 2J = clear screen
+    brne 1f                        ;
+    rcall clear_buffer             ;
+1:  ret                            ;

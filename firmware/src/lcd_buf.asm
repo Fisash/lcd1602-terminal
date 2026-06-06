@@ -1,5 +1,4 @@
 #define REAL_LINE_SIZE 16
-
 #define LINE_BUF_SIZE 64
 
 .include "base_macro.inc"
@@ -16,6 +15,11 @@ cursor_ptr: .space 2
 .global lcd_move_cursor_to_z
 .global lcd_cursor_to_line1
 .global lcd_cursor_to_line2
+
+.global lcd_cursor_add
+.global lcd_cursor_increment
+.global lcd_cursor_sub
+.global lcd_cursor_decrement
 
 .global lcd_input_char
 .global lcd_erase_char
@@ -71,6 +75,13 @@ lcd_cursor_increment:
     rcall lcd_move_cursor_to_z
     ret
     
+; add r17 to cursor ptr 
+lcd_cursor_add:
+    rcall lcd_load_cursor_addres_to_z
+    add_z r17
+    rcall lcd_move_cursor_to_z
+    ret
+
 ; decrement cursor ptr for previous addres
 lcd_cursor_decrement:
     rcall lcd_load_cursor_addres_to_z
@@ -78,6 +89,13 @@ lcd_cursor_decrement:
     rcall lcd_move_cursor_to_z
     ret
     
+; sub r17 from cursor ptr 
+lcd_cursor_sub:
+    rcall lcd_load_cursor_addres_to_z
+    sub_z r17
+    rcall lcd_move_cursor_to_z
+    ret
+
 ; ----------------------------- write to buffers ------------------------------
 ; ----------- cursor based char input -----------
 ; put char to addres from cursor and increment cursor ptr

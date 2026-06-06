@@ -8,6 +8,10 @@
 #define PORTB 0x05
 #define PINB 0x03
 
+.section .bss
+input_line_offset: .space 1
+output_line_offset: .space 1
+
 .section .text
 .global main
 
@@ -21,6 +25,8 @@
 .extern lcd_move_cursor_to_z
 .extern lcd_cursor_to_line1
 .extern lcd_cursor_to_line2
+.extern lcd_cursor_add
+
 .extern lcd_input_char
 .extern lcd_erase_char
 .extern lcd_replace_char
@@ -31,6 +37,7 @@
 .extern uart_init
 .extern uart_write
 .extern uart_read
+.extern uart_try_read
 
 ; from typer.asm
 .extern type_char
@@ -52,15 +59,42 @@ main:
     rcall uart_init
     rcall lcd_init
 
+    ldi r16, 0
+    sts output_line_offset, r16
+    sts input_line_processing, r16
+
     ldi r16, 0x0  ; null mask
     out DDRD, r16 ; now ALL bits of DDRD is 0 - bits of D-port in INPUT (D0-D7)
     cbi DDRB, 0   ; now D8 in INPUT
+    cbi DDRB, 1   ; now D9 in INPUT
+    cbi DDRB, 2   ; now D10 in INPUT
 
     ldi r16, 0b11111111
     out PORTD, r16; now ALL bits of PORTDB is - bits of D-port in HIGH (5V)
     sbi PORTB, 0  ; now D8 in HIGH (5V)
-
+    sbi PORTB, 1  ; now D9 in HIGH (5V)
+    sbi PORTB, 2  ; now D10 in HIGH (5V)
 loop:
+    rcall input_line_processing
+    rcall output_line_processing
+    rjmp loop
+
+output_line_processing:
+    rcall uart_try_read
+    brne 1f
+    rcall lcd_cursor_to_line2
+    lds r17, output_line_offset
+    rcall lcd_cursor_add
+    inc r17
+    sts output_line_offset, r17
+     
+    rcall lcd_input_char
+    rcall lcd_cursor_to_line1
+    ;lds r17, input_line_offset
+    ;rcall lcd_cursor_add
+1:  ret
+
+input_line_processing:
     sbic PIND, 2
     rjmp 1f
     tap_button PIND, 2, ' ', '/'
@@ -87,11 +121,19 @@ loop:
 
 6:  sbis PINB, 0
     rcall lcd_erase_char
+    rjmp 7f
 
-    rcall delay_tap
+7:  sbic PINB, 1
+    rjmp 8f
+    tap_button PINB, 1, '0', '9'
+
+8:  sbic PINB, 2
+    rjmp 9f
+    tap_button PINB, 2, 'c', 'g'
+
+9:  rcall delay_tap
     ldi r16, 0
     ldi r17, 0
     rcall lcd_draw_buffer
-    
-    rjmp loop
 
+    ret

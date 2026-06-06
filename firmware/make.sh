@@ -47,4 +47,4 @@ echo "=== Generataring hex ==="
 avr-objcopy -O ihex "$OUT_DIR/main.elf" "$OUT_DIR/main.hex"
 
 echo "=== Firmwaring ==="
-avrdude -c arduino -p m328p -P /dev/ttyUSB13 -b 115200 -U flash:w:"$OUT_DIR/main.hex":i
+avrdude -c arduino -p m328p -P /dev/ttyUSB16 -b 115200 -U flash:w:"$OUT_DIR/main.hex":i
