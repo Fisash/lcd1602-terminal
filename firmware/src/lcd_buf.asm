@@ -151,7 +151,6 @@ clear_bytes_from_z:
     brne 1b
     ret
 
-
 ; ------------------------ work with ready-made buffer ------------------------
 ; fill line buffers for space char
 clear_buffer:
@@ -164,7 +163,6 @@ clear_buffer:
     rcall clear_bytes_from_z
     ret
 
-
 ; r16 = offset of first line
 ; r17 = offset of second line
 lcd_draw_buffer:
@@ -174,9 +172,10 @@ lcd_draw_buffer:
     push r17
     push r16
 
-    ; debug
+    #ifdef DEBUG
     rcall uart_output_buffer
     rcall uart_output_cursor_value
+    #endif
 
     rcall lcd_clear             ; clear lcd and set cursor to 0x0
 
@@ -200,7 +199,7 @@ lcd_draw_buffer:
     pop_z
     ret                         
 
-; --------------------------------- debugging ----------------------------------
+#ifdef DEBUG
 start_cursor_seq: .asciz "/^m[CUR"
 .p2align 1 
 uart_output_cursor_value:
@@ -227,3 +226,4 @@ uart_output_buffer:
     dec r17
     brne 1b
     ret
+#endif

@@ -44,3 +44,13 @@
     ldi r26, lo8(\addr)
     ldi r27, hi8(\addr)
 .endm
+
+.macro set_zero
+    clr r0          
+.endm
+
+.macro clr_zero
+    clr r0
+    inc r0
+    tst r0          
+.endm

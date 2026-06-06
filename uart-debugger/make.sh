@@ -40,7 +40,27 @@ echo "=== Compiling C sources ==="
 for cfile in "${C_FILES[@]}"; do
     obj="$OUT_DIR/$(basename "${cfile%.c}.o")"
     echo "  $cfile -> $obj"
-    gcc -m32 -Wall -nostdlib -ffreestanding -fno-stack-protector -fno-builtin -static -c "$cfile" -o "$obj"
+    gcc -m32 \
+    -Wall \
+    -Os \
+    -nostdlib \
+    -ffreestanding \
+    -fno-builtin \
+    -static \
+    -fno-stack-protector \
+    -fno-pie \
+    -fno-pic \
+    -fno-asynchronous-unwind-tables \
+    -fno-unwind-tables \
+    -fno-ident \
+    -fdata-sections \
+    -ffunction-sections \
+    -falign-functions=1 \
+    -falign-jumps=1 \
+    -falign-labels=1 \
+    -falign-loops=1 \
+    -c "$cfile" -o "$obj"
+
     OBJ_FILES+=("$obj")
 done
 

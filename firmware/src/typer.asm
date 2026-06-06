@@ -22,7 +22,6 @@ make_mask:
     dec r18
     brne 1b
 2:  ret
-    
 
 ; Z = addres of checking IO register
 ; r18 = number of bit
@@ -47,39 +46,27 @@ is_button_down:
 ; r24 - end typing ascii range code
 ; RESULT:
 ; r20 choosen ascii code
-;debug2: .asciz "start type char\n"
-;debug3: .asciz "end type char\n"
-
 type_char:                ; 
+    ldi r17, 0            ; zero offset for line 2
     mov r16, r22          ; 
     rcall lcd_input_char  ; new char that we will replace in leafing
+    ldi r16, 0            ; zero offset for line 1
     rcall lcd_draw_buffer
     mov r20, r22          ; set r20 start ascii code
-                          ;
 1:  rcall sdelay_tap      ;
-
     rcall is_button_down  ; check button status
-
     brne 2f               ; jump to end if button was upped
-                          ; else:
     push r20
     mov r16, r20          ; now current choosen char in r16
     rcall lcd_replace_char; replace last char (from drawen in proc start) to this one
+    ldi r16, 0            ; zero offset for line 1
     rcall lcd_draw_buffer
     pop r20
-
     inc r20               ;  
-
     mov r25, r24          ; now r25 = last ascii range char
     inc r25               ; now r25 = first out of range char code
     cp r20, r25           ; compare r20 with this code
     brlo 1b               ; if r20 is not out of range - go to next iter
     mov r20, r22          ; write r20 for next range circe
     rjmp 1b               ; next iter now
-2:  
-;    push_z
-;    set_z debug3
-;    rcall uart_write_string
-;    pop_z
-    ret                  
-    
+2:  ret                  

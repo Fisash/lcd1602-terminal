@@ -63,9 +63,9 @@ delay_huge:
     rcall delay_3_nested
     ret
 
-; delay by 255*255*20
+; delay by 255*255*25
 delay_tap:
-    ldi r20, 20
+    ldi r20, 25
     rcall delay_3_nested
     ret
 

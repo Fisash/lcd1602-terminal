@@ -41,7 +41,6 @@
     ldi r22, \start
     ldi r24, \end
     rcall type_char
-    rcall delay_tap
 .endm
 
 main:
@@ -62,15 +61,9 @@ main:
     sbi PORTB, 0  ; now D8 in HIGH (5V)
 
 loop:
-    ldi r16, 0
-    ldi r17, 0
-    rcall lcd_draw_buffer
-
     sbic PIND, 2
     rjmp 1f
-    ldi r16, 'a'
-    rcall lcd_input_char
-    ;tap_button PIND, 2, ' ', '/'
+    tap_button PIND, 2, ' ', '/'
 
 1:  sbic PIND, 3
     rjmp 2f
@@ -96,6 +89,9 @@ loop:
     rcall lcd_erase_char
 
     rcall delay_tap
+    ldi r16, 0
+    ldi r17, 0
+    rcall lcd_draw_buffer
     
     rjmp loop
 
