@@ -16,6 +16,8 @@ cursor_ptr: .space 2
 .global lcd_cursor_to_line1
 .global lcd_cursor_to_line2
 
+.global copy_flash_string_to_line1
+
 .global lcd_cursor_add
 .global lcd_cursor_increment
 .global lcd_cursor_sub
@@ -27,8 +29,10 @@ cursor_ptr: .space 2
 
 .global lcd_draw_buffer
 .global clear_buffer
+.global clear_line1_buffer
+.global clear_line2_buffer
 
-.global uart_output_line1_to_cursor
+.global uart_output_line2_to_cursor
 
 ; from lcd_base
 .extern lcd_base_init
@@ -174,10 +178,17 @@ clear_bytes_from_z:
 ; ------------------------ work with ready-made buffer ------------------------
 ; fill line buffers for space char
 clear_buffer:
+    rcall clear_line1_buffer
+    rcall clear_line2_buffer
+    ret
+
+clear_line1_buffer:
     set_z line1_buffer
     ldi r17, LINE_BUF_SIZE
     rcall clear_bytes_from_z
+    ret
 
+clear_line2_buffer:
     set_z line2_buffer
     ldi r17, LINE_BUF_SIZE
     rcall clear_bytes_from_z
@@ -220,11 +231,11 @@ lcd_draw_buffer:
     ret                         
 
 ; output bytes from start of line1 buffer to cursor_ptr addres
-; i beleive that cursor_ptr >= line1_buffer
-uart_output_line1_to_cursor:
+; i beleive that cursor_ptr >= line2_buffer
+uart_output_line2_to_cursor:
     push_z                  ; save z
     push r17                ; save r17
-    set_z line1_buffer      ; set z to line1 start buffer
+    set_z line2_buffer      ; set z to line1 start buffer
 
     ;load current cursor ptr addres to r25:r24
     lds r24, cursor_ptr
