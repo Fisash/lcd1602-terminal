@@ -28,6 +28,8 @@ cursor_ptr: .space 2
 .global lcd_draw_buffer
 .global clear_buffer
 
+.global uart_output_line1_to_cursor
+
 ; from lcd_base
 .extern lcd_base_init
 .extern lcd_do_command
@@ -216,6 +218,34 @@ lcd_draw_buffer:
     pop r17
     pop_z
     ret                         
+
+; output bytes from start of line1 buffer to cursor_ptr addres
+; i beleive that cursor_ptr >= line1_buffer
+uart_output_line1_to_cursor:
+    push_z                  ; save z
+    push r17                ; save r17
+    set_z line1_buffer      ; set z to line1 start buffer
+
+    ;load current cursor ptr addres to r25:r24
+    lds r24, cursor_ptr
+    lds r25, cursor_ptr+1
+
+    ; calc lengthL cursor_ptr - line1_buffer
+    sub r24, r30
+    sbc r25, r31            ; now r25:r24 is a count of bytes to cursor
+    mov r17, r24            ; mov lower byte to r17. now need r17 iterations to send
+
+    tst r17                 ; if length is zero 
+    breq 1f                 ; so jump to exit
+
+2:  ld r16, Z+              ; read another byte from Z
+    rcall uart_write        ; send by uart
+    dec r17                 ; 
+    brne 2b
+
+1:  pop r17
+    pop_z
+    ret
 
 #ifdef DEBUG
 start_cursor_seq: .asciz "/^m[CUR"

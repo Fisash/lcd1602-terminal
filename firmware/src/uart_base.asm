@@ -1,5 +1,3 @@
-.include "base_macro.inc"
-
 #define UCSR0A 0xC0
 #define UCSR0B 0xC1
 #define UCSR0C 0xC2
@@ -60,7 +58,6 @@ uart_write_string:
     rjmp uart_write_string
 1:  ret
       
-
 ; after this, r16 will contain recived byte
 uart_read:
     lds r17, UCSR0A
@@ -68,17 +65,3 @@ uart_read:
     rjmp uart_read
     lds r16, UDR0
     ret
-
-; try get byte, if readed - set zero flag and put byte to r16
-uart_try_read:
-    push r17
-    clr_zero
-    lds r17, UCSR0A
-    sbrs r17, RXC0
-    rjmp 1f
-    lds r16, UDR0
-    set_zero
-1:  pop r17 
-    ret
-    
-    

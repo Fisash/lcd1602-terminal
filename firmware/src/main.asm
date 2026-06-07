@@ -9,8 +9,8 @@
 #define PINB 0x03
 
 .section .bss
-input_line_offset: .space 1
-output_line_offset: .space 1
+; for half-duplex work (0 = processing typing, 1 = processing uart answer reading)
+terminal_state: .space 1
 
 .section .text
 .global main
@@ -37,6 +37,8 @@ output_line_offset: .space 1
 .extern uart_init
 .extern uart_write
 .extern uart_read
+
+; from uart_buf.asm
 .extern uart_try_read
 
 ; from typer.asm
@@ -59,11 +61,8 @@ main:
     rcall uart_init
     rcall lcd_init
 
-    ldi r16, 0
-    sts output_line_offset, r16
-    sts input_line_processing, r16
-
     ldi r16, 0x0  ; null mask
+    sts terminal_state, r16
     out DDRD, r16 ; now ALL bits of DDRD is 0 - bits of D-port in INPUT (D0-D7)
     cbi DDRB, 0   ; now D8 in INPUT
     cbi DDRB, 1   ; now D9 in INPUT
@@ -74,27 +73,36 @@ main:
     sbi PORTB, 0  ; now D8 in HIGH (5V)
     sbi PORTB, 1  ; now D9 in HIGH (5V)
     sbi PORTB, 2  ; now D10 in HIGH (5V)
+
 loop:
-    rcall input_line_processing
-    rcall output_line_processing
-    rjmp loop
+    lds r16, terminal_state        ; load state var to r16
+    cpi r16, 0                     ; if its not 0 (typing state)?
+    brne 1f                        ; so jump to check next state
+                                   ; else, terminal in typing processing statej
+    rcall typing_processing        ; process typing
+    rjmp 3f                        ; jump to render buffer and delay
+                                   ;
+1:  cpi r16, 1                     ; if state is not 1 (uart answer reading)
+    brne 2f                        ; so jump to fix (set to 0, cause is no 0 and no 1 now)
+    rcall output_line_processing   ; process uart answer reading
+    rjmp 3f                        ; jump to render buffer and delay
+                                   ;
+2:  ldi r16, 0                     ;
+    sts terminal_state, r16        ;
+3:  ldi r16, 0                     ; set buffer offset to zero
+    ldi r17, 0                     ; and second line too zero offset
+    rcall lcd_draw_buffer          ; render lcd buffer
+                                   ;
+    rcall delay_tap                ; a bit delay
+                                   ;
+    rjmp loop                      ; next loop iteration jump
 
 output_line_processing:
-    rcall uart_try_read
-    brne 1f
-    rcall lcd_cursor_to_line2
-    lds r17, output_line_offset
-    rcall lcd_cursor_add
-    inc r17
-    sts output_line_offset, r17
-     
-    rcall lcd_input_char
-    rcall lcd_cursor_to_line1
-    ;lds r17, input_line_offset
-    ;rcall lcd_cursor_add
-1:  ret
+    rcall uart_read
+    rcall lcd_input_char 
+    ret
 
-input_line_processing:
+typing_processing:
     sbic PIND, 2
     rjmp 1f
     tap_button PIND, 2, ' ', '/'
@@ -121,19 +129,22 @@ input_line_processing:
 
 6:  sbis PINB, 0
     rcall lcd_erase_char
-    rjmp 7f
 
 7:  sbic PINB, 1
     rjmp 8f
     tap_button PINB, 1, '0', '9'
 
-8:  sbic PINB, 2
-    rjmp 9f
-    tap_button PINB, 2, 'c', 'g'
-
-9:  rcall delay_tap
-    ldi r16, 0
-    ldi r17, 0
-    rcall lcd_draw_buffer
-
+8:  sbis PINB, 2
+    rcall send_typed
     ret
+
+; send typed text from buffer to uart
+send_typed:
+    rcall uart_output_line1_to_cursor   ; output typing buffer from start to cursor
+    ldi r16, 0x0A                       ; load end of line (\n) byte to r16
+    rcall uart_write                    ; send this to uart. so we upload out typed cmd
+                                        ;
+    ldi r16, 1                          ; change state to wait and pring answer
+    sts terminal_state, r16             ;
+    rcall lcd_cursor_to_line2 
+    ret                                 ;
