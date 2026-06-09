@@ -47,20 +47,17 @@ is_button_down:
 ; RESULT:
 ; r20 choosen ascii code
 type_char:                ; 
-    ldi r17, 0            ; zero offset for line 2
     mov r16, r22          ; 
     rcall lcd_input_char  ; new char that we will replace in leafing
-    ldi r16, 0            ; zero offset for line 1
-    rcall lcd_draw_buffer
+    rcall update_line2_offset
+    rcall render
     mov r20, r22          ; set r20 start ascii code
-1:  rcall sdelay_tap      ;
-    rcall is_button_down  ; check button status
+1:  rcall is_button_down  ; check button status
     brne 2f               ; jump to end if button was upped
     push r20
     mov r16, r20          ; now current choosen char in r16
     rcall lcd_replace_char; replace last char (from drawen in proc start) to this one
-    ldi r16, 0            ; zero offset for line 1
-    rcall lcd_draw_buffer
+    rcall render
     pop r20
     inc r20               ;  
     mov r25, r24          ; now r25 = last ascii range char

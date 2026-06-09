@@ -12,8 +12,12 @@
 line1_current_offset: .space 1
 line1_max_offset: .space 1
 
+line2_current_offset: .space 1
+
 .section .text
 .global main
+.global render
+.global update_line2_offset
 
 ; from delay.asm
 .extern delay_big
@@ -73,7 +77,7 @@ main:
 
     ldi r16, 0
     sts line1_current_offset, r16
-
+    sts line2_current_offset, r16
 
     rcall change_state_to_typing
 
@@ -91,15 +95,15 @@ main:
     rjmp typing_loop
 
 render:
-    lds r16, line1_current_offset  ; set buffer offset to zero
-    ldi r17, 0                     ; and second line too zero offset
+    lds r16, line1_current_offset  ; set buffer offset
+    lds r17, line2_current_offset   ; and second line offset
     rcall lcd_draw_buffer          ; render lcd buffer
-    rcall delay_tap
-    rcall update_offet_to_scroll
+    rcall sdelay_tap                
+    rcall update_line1_offset   ; for line 1 scrolling
     ret
 
 ; r16 = current line1 offet
-update_offet_to_scroll:
+update_line1_offset:
     inc r16
     lds r17, line1_max_offset
     cp r16, r17
@@ -148,20 +152,43 @@ typing_loop:
     rjmp 6f
     tap_button PIND, 7, 'u', '}'
 
-6:  sbis PINB, 0
+6:  sbic PINB, 0
+    rjmp 7f
     rcall lcd_erase_char
+    rcall update_line2_offset
 
 7:  sbic PINB, 1
     rjmp 8f
-    ; 30-3F
     tap_button PINB, 1, '0', '?'
 
 8:  sbis PINB, 2
     rjmp send_typed
 
     rcall render
-
     rjmp typing_loop
+
+; it calls from typer when it input new char
+; to not call it every typer loop iteraion
+update_line2_offset:
+    push_z
+    push r24
+    push r25
+
+    rcall lcd_get_cursor_offset_from_line2   ; load string length to r17
+    cpi r17, 17                              ; compare with 17
+    brlo 1f                                  ; if it < 17, jump to 1f
+    brsh 2f                                  ; is it >= 17, jump to 2f
+                                             ;
+1:  ldi r16, 0                               ; if length < 17
+    sts line2_current_offset, r16            ; set line2 offset = 0
+    rjmp 3f                                  ; jump to ret
+2:  subi r17, 16                             ; if length >= 17, make r17=length-16
+    sts line2_current_offset, r17            ; set line2 offset = length-16
+3:  pop r25
+    pop r24
+    pop_z 
+    ret
+
 
 ; send typed text from buffer to uart
 send_typed:
