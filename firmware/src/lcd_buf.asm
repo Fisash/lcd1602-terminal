@@ -1,5 +1,5 @@
 #define REAL_LINE_SIZE 16
-#define LINE_BUF_SIZE 64
+#define LINE_BUF_SIZE 128
 
 .include "base_macro.inc"
 
@@ -15,6 +15,10 @@ cursor_ptr: .space 2
 .global lcd_move_cursor_to_z
 .global lcd_cursor_to_line1
 .global lcd_cursor_to_line2
+
+.global lcd_get_cursor_offset
+.global lcd_get_cursor_offset_from_line1
+.global lcd_get_cursor_offset_from_line2
 
 .global copy_flash_string_to_line1
 
@@ -230,22 +234,35 @@ lcd_draw_buffer:
     pop_z
     ret                         
 
-; output bytes from start of line1 buffer to cursor_ptr addres
+; get count of byts from Z addres to cursor
+; result in r17
+lcd_get_cursor_offset:
+    ;load current cursor ptr addres to r25:r24
+    lds r24, cursor_ptr
+    lds r25, cursor_ptr+1
+    ; calc length cursor_ptr - Z addres
+    sub r24, r30
+    sbc r25, r31            ; now r25:r24 is a count of bytes to cursor
+    mov r17, r24            ; mov lower byte to r17. now need r17 iterations to send
+    ret
+
+lcd_get_cursor_offset_from_line1:
+    set_z line1_buffer
+    rcall lcd_get_cursor_offset
+    ret
+
+lcd_get_cursor_offset_from_line2:
+    set_z line2_buffer
+    rcall lcd_get_cursor_offset
+    ret
+
+; output bytes from start of line2 buffer to cursor_ptr addres
 ; i beleive that cursor_ptr >= line2_buffer
 uart_output_line2_to_cursor:
     push_z                  ; save z
     push r17                ; save r17
-    set_z line2_buffer      ; set z to line1 start buffer
-
-    ;load current cursor ptr addres to r25:r24
-    lds r24, cursor_ptr
-    lds r25, cursor_ptr+1
-
-    ; calc lengthL cursor_ptr - line1_buffer
-    sub r24, r30
-    sbc r25, r31            ; now r25:r24 is a count of bytes to cursor
-    mov r17, r24            ; mov lower byte to r17. now need r17 iterations to send
-
+    ; get offset from line2_buffer to cursor. res in r17
+    rcall lcd_get_cursor_offset_from_line2 
     tst r17                 ; if length is zero 
     breq 1f                 ; so jump to exit
 

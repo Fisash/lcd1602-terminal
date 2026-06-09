@@ -8,6 +8,10 @@
 #define PORTB 0x05
 #define PINB 0x03
 
+.section .bss
+line1_current_offset: .space 1
+line1_max_offset: .space 1
+
 .section .text
 .global main
 
@@ -48,6 +52,7 @@
     rcall type_char
 .endm
 
+#define start_message_len 16
 start_message: .asciz "lcd1602-terminal"
 .p2align 1 
 
@@ -62,6 +67,13 @@ main:
 
     set_z start_message
     rcall copy_flash_string_to_line1
+
+    ldi r16, start_message_len
+    sts line1_max_offset, r16
+
+    ldi r16, 0
+    sts line1_current_offset, r16
+
 
     rcall change_state_to_typing
 
@@ -79,20 +91,37 @@ main:
     rjmp typing_loop
 
 render:
-    ldi r16, 0                     ; set buffer offset to zero
+    lds r16, line1_current_offset  ; set buffer offset to zero
     ldi r17, 0                     ; and second line too zero offset
     rcall lcd_draw_buffer          ; render lcd buffer
     rcall delay_tap
+    rcall update_offet_to_scroll
     ret
 
+; r16 = current line1 offet
+update_offet_to_scroll:
+    inc r16
+    lds r17, line1_max_offset
+    cp r16, r17
+    brne 1f
+    ldi r16, 0
+1:  sts line1_current_offset, r16
+    ret
+    
 reading_loop:
-    rcall uart_read
-    cpi r16, 0x04
-    breq 1f
-    rcall lcd_input_char 
-    rjmp reading_loop
-1:  rcall change_state_to_typing 
-    rcall render
+    rcall uart_read                ; read byte from uart. put in r16
+    cpi r16, 0x04                  ; if it is 0x04
+    breq 1f                        ; so jump to exit reading loop
+    rcall lcd_input_char           ; put this char to lcd buffer
+    rjmp reading_loop              ; jump to next iteration
+1:  rcall lcd_get_cursor_offset_from_line1; get offset for scrolling
+    sts line1_max_offset, r17      ; set it as max offset
+    rcall change_state_to_typing   ; we got 0x04, so clear line and move cursor for typing
+
+    ldi r16, 0
+    sts line1_current_offset, r16
+
+    rcall render                   ; draw buffer to lcd
 
 typing_loop:
     sbic PIND, 2

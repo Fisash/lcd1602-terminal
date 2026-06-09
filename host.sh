@@ -21,11 +21,18 @@ while read -r cmd <&3; do
     echo "$cmd" >&${LCDTERMBASH[1]}
     echo "echo '$MARKER'" >&${LCDTERMBASH[1]}
 
+    first=1
     while read -r output <&${LCDTERMBASH[0]}; do
         [ "$output" = "$MARKER" ] && break
         output="${output%$'\r'}"
         [ -z "$output" ] && continue
-        echo -n "$output" >&4
+        
+        if ["$first" = 1]; then
+            first=0
+        else
+            printf ' ' >&4
+        fi
+        printf '%s'  "$output" >&4
     done
 
     printf '\x04' >&4
