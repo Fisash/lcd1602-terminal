@@ -9,12 +9,12 @@ vcc- 5v <br/>
 tact buttons: in pin range d2-d9 (and other side to gnd) for typing chars <br/>
 and d10 for send button
 
-##Install the required packages (arch):
+## Install the required packages (arch):
 
 ```bash
 sudo pacman -S avr-binutils avr-gcc avrdude
 ```
-##Build and flash
+## Build and flash
 (you'll probably have to change the device file name to yours in the build script, as I was too lazy to take it out)
 ```bash
 cd firmware
